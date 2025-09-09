@@ -680,11 +680,11 @@ if run_simulation:
     col3.metric("Assimetria", f"{skewness:.2f}")
     col4.metric("Curtose", f"{kurtosis_value:.2f}")
     
-    # VISUALIZAÇÕES
-    col1, col2 = st.columns([8,1])
-    with col1:
+# VISUALIZAÇÕES
+col1, col2 = st.columns([8,1])
+with col1:
     st.subheader("📈 Análise Visual")
-    with col2:
+with col2:
     with st.expander("❓"):
         st.markdown("""
         **Objetivo da Análise Visual**  
@@ -695,36 +695,35 @@ if run_simulation:
 
         - **Distribuição de P&L**  
           Mostra a frequência de lucros e perdas simulados.  
-          ➝ Se a cauda esquerda é muito longa, há chance maior de perdas extremas.  
-          ➝ Decisão: reduzir exposição a ativos mais voláteis ou aumentar hedge.
+          ➝ Se a cauda esquerda é muito longa, há risco elevado de perdas extremas.  
+          ➝ **Decisão**: reduzir ativos voláteis ou reforçar estratégias de hedge.
 
         - **Q-Q Plot (Normalidade)**  
-          Verifica se os retornos seguem a distribuição normal.  
-          ➝ Pontos afastados da reta indicam risco de eventos raros (caudas pesadas).  
-          ➝ Decisão: considerar distribuições alternativas (ex.: t-Student) para capturar melhor os riscos.
+          Compara os retornos simulados com uma curva normal.  
+          ➝ Desvios da reta sugerem caudas pesadas e maior risco de choques.  
+          ➝ **Decisão**: revisar premissas de distribuição ou aumentar reservas de capital.
 
         - **Função de Distribuição (CDF)**  
-          Probabilidade acumulada de P&L.  
-          ➝ Permite ver rapidamente qual a probabilidade de perder além do VaR.  
-          ➝ Decisão: se a curva cresce rápido na região de perdas, repensar a alocação.
+          Mostra a probabilidade acumulada de perdas e ganhos.  
+          ➝ Ajuda a identificar qual a chance de perdas além do VaR.  
+          ➝ **Decisão**: ajustar limites de risco conforme a tolerância do investidor.
 
         - **Decomposição do Risco**  
-          Mede a contribuição de cada classe de ativo para o risco total.  
-          ➝ Barras altas indicam ativos que dominam o risco da carteira.  
-          ➝ Decisão: reduzir concentração ou rebalancear pesos.
+          Mostra a contribuição de cada classe de ativo para o risco total.  
+          ➝ Se um ativo domina o risco, pode haver concentração perigosa.  
+          ➝ **Decisão**: diversificar e rebalancear.
 
         - **Correlação Ações vs Portfólio**  
-          Mostra o quanto o portfólio depende do desempenho das ações.  
-          ➝ Se há forte correlação positiva, queda em ações gera grande impacto.  
-          ➝ Decisão: diversificar em ativos descorrelacionados (ex.: dólar, commodities).
+          Indica dependência do portfólio em relação às ações.  
+          ➝ Correlação alta significa que quedas em ações afetam fortemente o fundo.  
+          ➝ **Decisão**: buscar ativos descorrelacionados como proteção.
 
         - **VaR Móvel (rolling)**  
-          Evolução do risco ao longo das simulações.  
+          Evolução do VaR ao longo do tempo/simulações.  
           ➝ Oscilações grandes indicam instabilidade do portfólio.  
-          ➝ Decisão: se o VaR sobe muito em determinados períodos, avaliar cenários de stress ou ajustar limites de risco.
+          ➝ **Decisão**: implementar monitoramento mais frequente ou reduzir alavancagem.
         """)
 
-    
     # Criar gráficos simples com matplotlib para evitar erros
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     

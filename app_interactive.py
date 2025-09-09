@@ -149,7 +149,6 @@ fig_aloc = go.Figure(data=[go.Pie(
             'Crédito Privado', 'Imobiliário', 'Outros', 'Caixa'],
     values=[acoes, juros, dolar, commodities, credito_privado, imobiliario, outros,
             max(0, 100-total_aloc)],
-            max(0, 100-total_aloc)],
     hole=.3
 )])
 

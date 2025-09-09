@@ -69,41 +69,6 @@ with col3:
         format="%.2f"
     )
 
-    
-    # Menu dropdown para horizonte com mais opções
-    horizonte_dias = st.selectbox(
-        "Horizonte Temporal", 
-        options=[1, 5, 10, 15, 21, 42, 63, 126, 252, 504],
-        format_func=lambda x: f"{x} dias úteis ({x/21:.1f} meses)" if x > 21 else f"{x} dias úteis",
-        index=3
-    )
-    
-    nivel_conf = st.selectbox(
-        "Nível de Confiança", 
-        ["90%", "95%", "97.5%", "99%", "99.5%"],
-        index=1
-    )
-    
-with col2:
-    conf_map = {"90%": 0.90, "95%": 0.95, "97.5%": 0.975, "99%": 0.99, "99.5%": 0.995}
-    alpha = conf_map[nivel_conf]
-    
-    # Menu dropdown para número de simulações
-    n_sims = st.selectbox(
-        "Número de Simulações",
-        options=[10_000, 50_000, 100_000, 250_000, 500_000],
-        format_func=lambda x: f"{x:,} simulações",
-        index=1
-    )
-    
-    seed = st.number_input(
-        "Seed (reprodutibilidade)", 
-        min_value=0, 
-        max_value=1000000, 
-        value=42, 
-        step=1
-    )
-
 # ALOCAÇÃO POR CLASSE
 st.subheader("📊 Alocação por Classe")
 

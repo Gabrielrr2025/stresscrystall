@@ -712,11 +712,11 @@ with col2:
           ➝ **Decisão**: implementar monitoramento mais frequente ou reduzir alavancagem.
         """)
 
-    # Criar gráficos simples com matplotlib para evitar erros
-    if "pnl" in locals() and run_simulation:
+   # Criar gráficos simples com matplotlib para evitar erros
+if "pnl" in locals() and run_simulation:
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    
-    # 1. Histograma
+
+    # Histograma de P&L
     axes[0, 0].hist(pnl/1000, bins=50, alpha=0.7, color='blue', edgecolor='black')
     axes[0, 0].axvline(-var/1000, color='red', linestyle='--', label=f'VaR {nivel_conf}')
     axes[0, 0].axvline(-es/1000, color='orange', linestyle='--', label='CVaR')
@@ -724,66 +724,45 @@ with col2:
     axes[0, 0].set_ylabel('Frequência')
     axes[0, 0].set_title('Distribuição de P&L')
     axes[0, 0].legend()
-    axes[0, 0].grid(True, alpha=0.3)
-    
-    # 2. Q-Q Plot
-    stats.probplot(port_ret * 100, dist="norm", plot=axes[0, 1])
-    axes[0, 1].set_title('Q-Q Plot (Normalidade)')
-    axes[0, 1].grid(True, alpha=0.3)
-    
-    # 3. CDF
+
+    # Q-Q Plot
+    sm.qqplot(pnl, line='s', ax=axes[0, 1])
+    axes[0, 1].set_title('Q-Q Plot')
+
+    # Função de Distribuição Cumulativa
     sorted_pnl = np.sort(pnl)
     cdf = np.arange(1, len(sorted_pnl)+1) / len(sorted_pnl)
-    axes[0, 2].plot(sorted_pnl/1000, cdf*100, linewidth=2, color='darkblue')
-    axes[0, 2].axvline(-var/1000, color='red', linestyle='--', label=f'VaR {nivel_conf}')
+    axes[0, 2].plot(sorted_pnl/1000, cdf, color='blue')
+    axes[0, 2].axvline(-var/1000, color='red', linestyle='--', label='VaR')
+    axes[0, 2].set_title('Função de Distribuição (CDF)')
     axes[0, 2].set_xlabel('P&L (R$ mil)')
-    axes[0, 2].set_ylabel('Probabilidade Acumulada (%)')
-    axes[0, 2].set_title('Função de Distribuição')
+    axes[0, 2].set_ylabel('Probabilidade acumulada')
     axes[0, 2].legend()
-    axes[0, 2].grid(True, alpha=0.3)
-    
-    # 4. Decomposição do risco
-    contrib_valores = [
-        np.std(R_total[:, 0] * pesos[0] * pl) / 1000,
-        np.std(R_total[:, 1] * pesos[1] * pl) / 1000,
-        np.std(R_total[:, 2] * pesos[2] * pl) / 1000,
-        np.std(R_total[:, 3] * pesos[3] * pl) / 1000,
-        np.std(R_total[:, 4] * pesos[4] * pl) / 1000,
-        np.std(R_total[:, 5] * pesos[5] * pl) / 1000,
-        np.std(R_total[:, 6] * pesos[6] * pl) / 1000
-    ]
-    contrib_nomes = ['Ações', 'RF', 'Créd.', 'Moeda', 'Imob.', 'Comm.', 'Alt.']
-    
-    axes[1, 0].bar(contrib_nomes, contrib_valores, color=['#FF6B6B', '#4ECDC4', '#95E1D3', 
-                                                          '#45B7D1', '#AA96DA', '#FFA07A', '#FCBAD3'])
-    axes[1, 0].set_ylabel('Contribuição (R$ mil)')
+
+    # Decomposição do Risco
+    contrib_risco = vols_horizonte * np.array([acoes, juros, credito_privado, dolar, imobiliario, commodities, alternativos]) / 100
+    axes[1, 0].bar(['Ações', 'Renda Fixa', 'Crédito Privado', 'Moeda', 'Imobiliário', 'Commodities', 'Outros'], contrib_risco)
     axes[1, 0].set_title('Decomposição do Risco')
-    axes[1, 0].grid(True, alpha=0.3, axis='y')
-    
-    # 5. Scatter plot
-    sample_size = min(1000, len(R_total))
-    axes[1, 1].scatter(R_total[:sample_size, 0]*100, port_ret[:sample_size]*100, 
-                      alpha=0.5, s=1, c=port_ret[:sample_size]*100, cmap='RdYlGn')
-    axes[1, 1].set_xlabel('Retorno Ações (%)')
-    axes[1, 1].set_ylabel('Retorno Portfolio (%)')
-    axes[1, 1].set_title('Correlação Ações vs Portfolio')
-    axes[1, 1].grid(True, alpha=0.3)
-    
-    # 6. VaR rolling
-    window = max(100, len(pnl) // 50)
-    rolling_var = pd.Series(pnl).rolling(window=window).quantile(1-alpha).values * -1
-    axes[1, 2].plot(rolling_var/1000, alpha=0.7, linewidth=1, color='darkred')
-    axes[1, 2].axhline(var/1000, color='red', linestyle='--', label=f'VaR Total')
-    axes[1, 2].set_xlabel('Simulação #')
-    axes[1, 2].set_ylabel('VaR (R$ mil)')
+    axes[1, 0].set_ylabel('Contribuição (desvio-padrão ajustado)')
+
+    # Scatter Ações vs Portfólio
+    axes[1, 1].scatter(np.random.normal(0, vols_horizonte[0], n_sims), pnl/1000, alpha=0.3)
+    axes[1, 1].set_title('Scatter Ações vs Portfólio')
+    axes[1, 1].set_xlabel('Retorno Ações')
+    axes[1, 1].set_ylabel('P&L Portfólio (R$ mil)')
+
+    # VaR Móvel (rolling)
+    window = 250
+    rolling_var = [np.percentile(pnl[max(0, i-window):i+1], 100*(1-float(conf_map[nivel_conf]))) for i in range(len(pnl))]
+    axes[1, 2].plot(rolling_var, color='red')
     axes[1, 2].set_title(f'VaR Móvel (janela={window})')
-    axes[1, 2].legend()
-    axes[1, 2].grid(True, alpha=0.3)
-    
+
     plt.tight_layout()
     st.pyplot(fig)
-    else:
+
+else:
     st.info("🔎 Execute a simulação para visualizar os gráficos de análise.")
+
     
     # EXPORTAÇÃO DE DADOS
     if export_data:

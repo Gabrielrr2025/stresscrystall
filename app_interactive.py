@@ -125,6 +125,16 @@ with col7:
 
 total_aloc = acoes + juros + dolar + commodities + credito_privado + imobiliario + outros
 
+col5, col6, col7 = st.columns(3)
+with col5:
+    credito_privado = st.slider("Crédito Privado %", 0, 100, 5)
+with col6:
+    imobiliario = st.slider("Imobiliário %", 0, 100, 5)
+with col7:
+    outros = st.slider("Outros %", 0, 100, 0)
+
+total_aloc = acoes + juros + dolar + commodities + credito_privado + imobiliario + outros
+
 # Validação visual da alocação
 if total_aloc > 100:
     st.error(f"⚠️ Alocação total: {total_aloc}% excede 100%!")
@@ -138,6 +148,7 @@ fig_aloc = go.Figure(data=[go.Pie(
     labels=['(Ibovespa)', '(pré ou pós)', 'Moeda Estrangeira', 'Commodities',
             'Crédito Privado', 'Imobiliário', 'Outros', 'Caixa'],
     values=[acoes, juros, dolar, commodities, credito_privado, imobiliario, outros,
+            max(0, 100-total_aloc)],
             max(0, 100-total_aloc)],
     hole=.3
 )])
@@ -165,20 +176,18 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 with tab1:
     st.write("### Parâmetros de Volatilidade")
-    st.info("💡 Volatilidades anualizadas baseadas em dados históricos ou expectativas futuras")
-    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        vol_acoes = st.number_input("Vol. Ações (%a.a.)", 5.0, 100.0, 25.0, 0.5,
+        vol_acoes = st.number_input("Vol. (Ibovespa) (%a.a.)", 5.0, 100.0, 25.0, 0.5)
                         
     with col2:
-        vol_juros = st.number_input("Vol. Renda Fixa (%a.a.)", 1.0, 50.0, 8.0, 0.5,
+        vol_juros = st.number_input("Vol. (pré ou pós) (%a.a.)", 1.0, 50.0, 8.0, 0.5)
                                   
     with col3:
-        vol_dolar = st.number_input("Vol. Moeda (%a.a.)", 5.0, 50.0, 15.0, 0.5,
+        vol_dolar = st.number_input("Vol. Moeda (%a.a.)", 5.0, 50.0, 15.0, 0.5)
                                  
     with col4:
-        vol_commodities = st.number_input("Vol. Commodities (%a.a.)", 10.0, 100.0, 30.0, 0.5,
+        vol_commodities = st.number_input("Vol. Commodities (%a.a.)", 10.0, 100.0, 30.0, 0.5)
                                          
     
     vols = np.array([vol_acoes, vol_juros, vol_dolar, vol_commodities]) / 100
@@ -255,12 +264,12 @@ with tab2:
         with col1:
             corr_acoes_rf = st.slider("Ações × RF", -1.0, 1.0, 
                                       selected_template["acoes_rf"], 0.05)
-            corr_acoes_dolar = st.slider("Ações × Moeda", -1.0, 1.0,
+    dolar = st.slider("Moeda Estrangeira %", 0, 100, 20)
                                          selected_template["acoes_dolar"], 0.05)
         with col2:
             corr_acoes_comm = st.slider("Ações × Commodities", -1.0, 1.0,
                                        selected_template["acoes_comm"], 0.05)
-            corr_rf_dolar = st.slider("RF × Moeda", -1.0, 1.0,
+    dolar = st.slider("Moeda Estrangeira %", 0, 100, 20)
                                      selected_template["rf_dolar"], 0.05)
         with col3:
             corr_rf_comm = st.slider("RF × Commodities", -1.0, 1.0,
@@ -326,7 +335,7 @@ with tab3:
             ["Normal", "t-Student", "Lognormal", "Normal Mixture"],
             help="Distribuição define o formato dos retornos: Normal (otimista), t-Student (crises), Lognormal (positivos), Mixture (volatilidade variável)." )
         if dist_acoes == "t-Student":
-            df_acoes = st.slider("Graus de liberdade (Ações)", 3, 30, 5,
+    acoes = st.slider("(Ibovespa) %", 0, 100, 40)
                                 help="Menor valor = caudas mais pesadas")
         elif dist_acoes == "Normal Mixture":
             mix_prob = st.slider("Probabilidade regime volátil (%)", 5, 30, 10) / 100
@@ -338,7 +347,7 @@ with tab3:
             help="Normal é adequado para títulos de baixo risco"
         )
         if dist_juros == "t-Student":
-            df_juros = st.slider("Graus de liberdade (RF)", 3, 30, 10)
+    juros = st.slider("(pré ou pós) %", 0, 100, 30)
     
     with col2:
         dist_dolar = st.selectbox(
@@ -347,7 +356,7 @@ with tab3:
             help="t-Student captura saltos cambiais"
         )
         if dist_dolar == "t-Student":
-            df_dolar = st.slider("Graus de liberdade (Moeda)", 3, 30, 7)
+    dolar = st.slider("Moeda Estrangeira %", 0, 100, 20)
         
         dist_commodities = st.selectbox(
             "Distribuição - Commodities",
@@ -355,7 +364,17 @@ with tab3:
             help="Lognormal: apenas retornos positivos possíveis"
         )
         if dist_commodities == "t-Student":
-            df_commodities = st.slider("Graus de liberdade (Commodities)", 3, 30, 5)
+    commodities = st.slider("Commodities %", 0, 100, 5)
+
+col5, col6, col7 = st.columns(3)
+with col5:
+    credito_privado = st.slider("Crédito Privado %", 0, 100, 5)
+with col6:
+    imobiliario = st.slider("Imobiliário %", 0, 100, 5)
+with col7:
+    outros = st.slider("Outros %", 0, 100, 0)
+
+total_aloc = acoes + juros + dolar + commodities + credito_privado + imobiliario + outros
 
 with tab4:
     st.write("### Cenários de Stress Determinísticos")
@@ -1171,8 +1190,10 @@ Curtose: {'Caudas pesadas (leptocúrtica)' if kurtosis_value > 1 else
                 ax6 = plt.subplot(2, 3, 6)
                 sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='RdBu_r',
                            center=0, square=True, cbar_kws={"shrink": 0.8},
-                           xticklabels=['Ações', 'RF', 'Moeda', 'Comm.'],
-                           yticklabels=['Ações', 'RF', 'Moeda', 'Comm.'])
+    labels=['(Ibovespa)', '(pré ou pós)', 'Moeda Estrangeira', 'Commodities',
+            'Crédito Privado', 'Imobiliário', 'Outros', 'Caixa'],
+    labels=['(Ibovespa)', '(pré ou pós)', 'Moeda Estrangeira', 'Commodities',
+            'Crédito Privado', 'Imobiliário', 'Outros', 'Caixa'],
                 ax6.set_title('Matriz de Correlação')
                 
                 plt.suptitle(f'Análise de Risco - {nome_projeto}', fontsize=14, fontweight='bold')

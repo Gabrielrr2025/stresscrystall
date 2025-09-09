@@ -1,4 +1,50 @@
-# app_professional.py
+with tab4:
+    st.write("### Cenários de Stress Determinísticos")
+    
+    usar_cenarios = st.checkbox("Incluir cenários de stress históricos", value=True,
+                              help="Complementa a análise probabilística com eventos reais")
+    
+    if usar_cenarios:
+        # Inicializar cenários para 7 ativos
+        if 'cenarios' not in st.session_state:
+            st.session_state.cenarios = pd.DataFrame({
+                'Nome': ['Crise 2008', 'COVID-19', 'Taper Tantrum', 'Brexit', 'Guerra Comercial'],
+                'Ações (%)': [-38.5, -33.9, -5.8, -8.5, -15.0],
+                'RF (%)': [8.0, -2.0, 12.0, 3.5, 5.0],
+                'Crédito (%)': [-25.0, -18.0, 8.0, 2.0, -5.0],
+                'Moeda (%)': [25.0, 18.0, 15.0, 12.0, 10.0],
+                'Imobiliário (%)': [-35.0, -15.0, -3.0, -5.0, -8.0],
+                'Commodities (%)': [-45.0, -30.0, -10.0, -5.0, -20.0],
+                'Alternativos (%)': [-40.0, -25.0, -8.0, -10.0, -18.0],
+                'Probabilidade (%)': [2.0, 2.0, 5.0, 3.0, 4.0]
+            })
+        
+        # Editor de cenários
+        st.write("*Edite os cenários de stress ou adicione novos:*")
+        edited_df = st.data_editor(
+            st.session_state.cenarios,
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "Nome": st.column_config.TextColumn("Cenário", width="small"),
+                "Ações (%)": st.column_config.NumberColumn("Ações", format="%.1f", width="small"),
+                "RF (%)": st.column_config.NumberColumn("RF", format="%.1f", width="small"),
+                "Crédito (%)": st.column_config.NumberColumn("Créd.", format="%.1f", width="small"),
+                "Moeda (%)": st.column_config.NumberColumn("Moeda", format="%.1f", width="small"),
+                "Imobiliário (%)": st.column_config.NumberColumn("Imob.", format="%.1f", width="small"),
+                "Commodities (%)": st.column_config.NumberColumn("Comm.", format="%.1f", width="small"),
+                "Alternativos (%)": st.column_config.NumberColumn("Alt.", format="%.1f", width="small"),
+                "Probabilidade (%)": st.column_config.NumberColumn("Prob", format="%.1f", width="small")
+            },
+            hide_index=True
+        )
+        st.session_state.cenarios = edited_df
+        
+        if len(st.session_state.cenarios) > 0:
+            col1, col2 = st.columns(2)
+            with col1:
+                pct_stress = st.slider("Percentual de cenários de stress", 5, 30, 10,
+                                     help="%# app_professional.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -1329,45 +1375,86 @@ Status:                 {'APROVADO' if 0.05 < kupiec_p < 0.95 else 'REVISAR'}
 
 # SIDEBAR COM INFORMAÇÕES
 with st.sidebar:
-    st.header("📚 Documentação")
+    st.header("📚 Guia de Parâmetros")
     
-    with st.expander("Sobre o VaR", expanded=False):
+    with st.expander("📊 Seed", expanded=False):
         st.write("""
-        **Value at Risk (VaR)** é uma medida estatística que quantifica 
-        o risco de perda de um portfolio em condições normais de mercado.
+        **O que é**: Número que garante reprodutibilidade
         
-        **Interpretação**: Com X% de confiança, as perdas não excederão 
-        o VaR no horizonte especificado.
+        **Impacto**: Com mesmo seed, simulação sempre gera mesmos resultados. Essencial para auditoria.
         """)
     
-    with st.expander("Metodologias", expanded=False):
+    with st.expander("🎲 Distribuições", expanded=False):
         st.write("""
-        **Monte Carlo**: Simula milhares de cenários possíveis baseados 
-        em parâmetros estatísticos.
+        **Normal**: Simétrica, eventos extremos raros
         
-        **Vantagens**:
-        - Flexibilidade nas distribuições
-        - Incorpora não-linearidades
-        - Permite cenários complexos
+        **t-Student**: Caudas pesadas, crashes mais frequentes. Menor grau de liberdade = mais eventos extremos
+        
+        **Lognormal**: Apenas valores positivos, assimetria positiva
+        
+        **Mixture**: Combina regimes calmos e voláteis
+        
+        **Impacto**: t-Student aumenta VaR em 10-30% vs Normal
         """)
     
-    with st.expander("Métricas", expanded=False):
+    with st.expander("🔗 Correlações", expanded=False):
         st.write("""
-        **CVaR/ES**: Perda média além do VaR
+        **Mercado Normal**: Correlações históricas médias
         
-        **Sharpe**: Retorno/Risco total
+        **Crise**: Tudo correlaciona (exceto safe havens)
         
-        **Sortino**: Retorno/Risco negativo
+        **Risk-On**: Ativos de risco sobem juntos
         
-        **Assimetria**: Simetria da distribuição
+        **Impacto**: Correlação alta pode dobrar o VaR vs ativos independentes
+        """)
+    
+    with st.expander("🎯 Cenários de Stress", expanded=False):
+        st.write("""
+        **O que são**: Eventos históricos reais aplicados deterministicamente
         
-        **Curtose**: Peso das caudas
+        **% de Stress**: Quanto das simulações usa cenários históricos vs Monte Carlo
+        
+        **Impacto**: 10% stress pode aumentar VaR em 20-40% dependendo da severidade
+        """)
+    
+    with st.expander("📈 Volatilidade", expanded=False):
+        st.write("""
+        **Significado**: Desvio padrão anualizado dos retornos
+        
+        **Referências típicas**:
+        - Ações: 20-30%
+        - Renda Fixa: 4-8%
+        - Crédito Privado: 10-15%
+        - Imobiliário: 15-20%
+        - Commodities: 25-35%
+        
+        **Impacto**: VaR proporcional à volatilidade
+        """)
+    
+    with st.expander("✅ Backtesting", expanded=False):
+        st.write("""
+        **Kupiec**: Testa se frequência de violações do VaR está correta
+        
+        **Christoffersen**: Adiciona teste de independência das violações
+        
+        **Impacto**: p-valor < 0.05 indica modelo inadequado, necessita recalibração
+        """)
+    
+    with st.expander("📉 Métricas de Risco", expanded=False):
+        st.write("""
+        **VaR**: Perda máxima em X% dos casos
+        
+        **CVaR/ES**: Perda média quando VaR é excedido (sempre > VaR)
+        
+        **Sharpe**: Retorno/Risco (>1 bom, >2 excelente)
+        
+        **Sortino**: Similar Sharpe mas só considera risco negativo
         """)
     
     st.write("---")
     st.write("**Sistema VaR Professional**")
-    st.write(f"Versão 2.0 | {datetime.datetime.now():%Y}")
-    st.caption("Desenvolvido para análise institucional de risco")
+    st.write(f"Versão 2.1 | {datetime.datetime.now():%Y}")
+    st.caption("Análise institucional de risco")
 
 # Footer
 st.write("---")

@@ -696,7 +696,7 @@ with col2:
         - **Distribuição de P&L**  
           Mostra a frequência de lucros e perdas simulados.  
           ➝ Se a cauda esquerda é muito longa, há risco elevado de perdas extremas.  
-          ➝ **Decisão**: reduzir ativos voláteis ou reforçar estratégias de hedge.
+          ➝ **Decisão**: reduzir ativos voláteis ou reforçar hedge.
 
         - **Q-Q Plot (Normalidade)**  
           Compara os retornos simulados com uma curva normal.  
@@ -705,7 +705,7 @@ with col2:
 
         - **Função de Distribuição (CDF)**  
           Mostra a probabilidade acumulada de perdas e ganhos.  
-          ➝ Ajuda a identificar qual a chance de perdas além do VaR.  
+          ➝ Ajuda a identificar a chance de perdas além do VaR.  
           ➝ **Decisão**: ajustar limites de risco conforme a tolerância do investidor.
 
         - **Decomposição do Risco**  

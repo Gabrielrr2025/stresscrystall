@@ -713,6 +713,7 @@ with col2:
         """)
 
     # Criar gráficos simples com matplotlib para evitar erros
+    if "pnl" in locals() and run_simulation:
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     
     # 1. Histograma
@@ -781,6 +782,8 @@ with col2:
     
     plt.tight_layout()
     st.pyplot(fig)
+    else:
+    st.info("🔎 Execute a simulação para visualizar os gráficos de análise.")
     
     # EXPORTAÇÃO DE DADOS
     if export_data:

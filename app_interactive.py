@@ -60,14 +60,6 @@ with col1:
     data_ref = st.date_input("Data de Referência", datetime.date.today())
 with col2:
     nome_fundo = st.text_input("Nome do Fundo", value="Fundo Exemplo")
-with col3:
-    pl = st.number_input(
-        "Patrimônio Líquido (R$)", 
-        min_value=0.0, 
-        value=10_000_000.0, 
-        step=100_000.0,
-        format="%.2f"
-    )
 
 # ALOCAÇÃO POR CLASSE
 st.subheader("📊 Alocação por Classe")

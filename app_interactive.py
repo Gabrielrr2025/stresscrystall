@@ -45,28 +45,30 @@ st.markdown("""
 st.markdown('<p class="main-header">📊 VaR Monte Carlo Professional</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Sistema Avançado de Gestão de Risco</p>', unsafe_allow_html=True)
 
-# INFORMAÇÕES DO PROJETO
-st.subheader("🏢 Informações Institucionais")
+# DADOS DO FUNDO
+st.subheader("🏢 Dados do Fundo")
 col1, col2, col3 = st.columns(3)
 with col1:
-    nome_projeto = st.text_input("Nome do Projeto/Cliente", value="Análise de Risco - Portfolio")
+    nome_projeto = st.text_input("Nome do Projeto", value="Análise de Risco - Portfolio")
 with col2:
-    cnpj = st.text_input("CNPJ/Código", value="", placeholder="00.000.000/0000-00")
-with col3:
     responsavel = st.text_input("Responsável pela Análise", value="")
+with col3:
+    cnpj = st.text_input("CNPJ", value="", placeholder="00.000.000/0000-00")
 
-# PARÂMETROS PRINCIPAIS
-st.subheader("⚙️ Parâmetros da Simulação")
-col1, col2 = st.columns(2)
-
+col1, col2, col3 = st.columns(3)
 with col1:
+    data_ref = st.date_input("Data de Referência", datetime.date.today())
+with col2:
+    nome_fundo = st.text_input("Nome do Fundo", value="Fundo Exemplo")
+with col3:
     pl = st.number_input(
-    "Patrimônio Líquido (R$)", 
-    min_value=0.0, 
-    value=10_000_000.0, 
-    step=100_000.0,
-    format="%.2f"
-)
+        "Patrimônio Líquido (R$)", 
+        min_value=0.0, 
+        value=10_000_000.0, 
+        step=100_000.0,
+        format="%.2f"
+    )
+
     
     # Menu dropdown para horizonte com mais opções
     horizonte_dias = st.selectbox(
@@ -102,29 +104,27 @@ with col2:
         step=1
     )
 
-# ALOCAÇÃO DA CARTEIRA
-st.subheader("📈 Composição da Carteira")
+# ALOCAÇÃO POR CLASSE
+st.subheader("📊 Alocação por Classe")
 
-# Organizar em duas linhas para 7 ativos
-st.write("#### Ativos Tradicionais")
+st.write("### Ativos")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    acoes = st.slider("Ações %", 0, 100, 25)
+    acoes = st.slider("Ações", 0, 100, 25)
 with col2:
-    juros = st.slider("Renda Fixa %", 0, 100, 20)
+    juros = st.slider("Renda Fixa", 0, 100, 20)
 with col3:
-    credito_privado = st.slider("Crédito Privado %", 0, 100, 15)
+    credito_privado = st.slider("Crédito Privado", 0, 100, 15)
 with col4:
-    dolar = st.slider("Moeda Estrangeira %", 0, 100, 10)
+    dolar = st.slider("Moeda Estrangeira", 0, 100, 10)
 
-st.write("#### Ativos Alternativos")
 col1, col2, col3 = st.columns(3)
 with col1:
-    imobiliario = st.slider("Imobiliário %", 0, 100, 15)
+    imobiliario = st.slider("Imobiliário", 0, 100, 15)
 with col2:
-    commodities = st.slider("Commodities %", 0, 100, 5)
+    commodities = st.slider("Commodities", 0, 100, 5)
 with col3:
-    alternativos = st.slider("Outros Alternativos %", 0, 100, 5)
+    alternativos = st.slider("Outros", 0, 100, 5)
 
 total_aloc = acoes + juros + credito_privado + dolar + imobiliario + commodities + alternativos
 
@@ -136,9 +136,11 @@ elif total_aloc == 100:
 else:
     st.info(f"💰 Alocação: {total_aloc}% | Caixa: {100-total_aloc}%")
 
-# Gráfico de pizza da alocação
+# COMPOSIÇÃO DA CARTEIRA
+st.subheader("📈 Composição da Carteira")
+
 fig_aloc = go.Figure(data=[go.Pie(
-    labels=['Ações', 'Renda Fixa', 'Crédito Privado', 'Moeda', 'Imobiliário', 'Commodities', 'Alternativos', 'Caixa'],
+    labels=['Ações', 'Renda Fixa', 'Crédito Privado', 'Moeda Estrangeira', 'Imobiliário', 'Commodities', 'Outros', 'Caixa'],
     values=[acoes, juros, credito_privado, dolar, imobiliario, commodities, alternativos, max(0, 100-total_aloc)],
     hole=.3,
     marker_colors=['#FF6B6B', '#4ECDC4', '#95E1D3', '#45B7D1', '#AA96DA', '#FFA07A', '#FCBAD3', '#98D8C8'],
@@ -146,12 +148,13 @@ fig_aloc = go.Figure(data=[go.Pie(
     textinfo='label+percent'
 )])
 fig_aloc.update_layout(
-    title="Composição da Carteira Multi-Ativos",
+    title="Distribuição da Carteira por Classe",
     height=350,
     showlegend=True,
     margin=dict(l=0, r=0, t=30, b=0)
 )
 st.plotly_chart(fig_aloc, use_container_width=True)
+
 
 pesos = np.array([acoes, juros, credito_privado, dolar, imobiliario, commodities, alternativos])/100
 
@@ -678,7 +681,49 @@ if run_simulation:
     col4.metric("Curtose", f"{kurtosis_value:.2f}")
     
     # VISUALIZAÇÕES
+    col1, col2 = st.columns([8,1])
+    with col1:
     st.subheader("📈 Análise Visual")
+    with col2:
+    with st.expander("❓"):
+        st.markdown("""
+        **Objetivo da Análise Visual**  
+        Estes gráficos permitem avaliar como os riscos se distribuem no portfólio e onde estão os pontos de atenção.  
+        Use cada um deles para embasar decisões de alocação, hedge e monitoramento.  
+
+        **Gráficos e como interpretar para decisão:**
+
+        - **Distribuição de P&L**  
+          Mostra a frequência de lucros e perdas simulados.  
+          ➝ Se a cauda esquerda é muito longa, há chance maior de perdas extremas.  
+          ➝ Decisão: reduzir exposição a ativos mais voláteis ou aumentar hedge.
+
+        - **Q-Q Plot (Normalidade)**  
+          Verifica se os retornos seguem a distribuição normal.  
+          ➝ Pontos afastados da reta indicam risco de eventos raros (caudas pesadas).  
+          ➝ Decisão: considerar distribuições alternativas (ex.: t-Student) para capturar melhor os riscos.
+
+        - **Função de Distribuição (CDF)**  
+          Probabilidade acumulada de P&L.  
+          ➝ Permite ver rapidamente qual a probabilidade de perder além do VaR.  
+          ➝ Decisão: se a curva cresce rápido na região de perdas, repensar a alocação.
+
+        - **Decomposição do Risco**  
+          Mede a contribuição de cada classe de ativo para o risco total.  
+          ➝ Barras altas indicam ativos que dominam o risco da carteira.  
+          ➝ Decisão: reduzir concentração ou rebalancear pesos.
+
+        - **Correlação Ações vs Portfólio**  
+          Mostra o quanto o portfólio depende do desempenho das ações.  
+          ➝ Se há forte correlação positiva, queda em ações gera grande impacto.  
+          ➝ Decisão: diversificar em ativos descorrelacionados (ex.: dólar, commodities).
+
+        - **VaR Móvel (rolling)**  
+          Evolução do risco ao longo das simulações.  
+          ➝ Oscilações grandes indicam instabilidade do portfólio.  
+          ➝ Decisão: se o VaR sobe muito em determinados períodos, avaliar cenários de stress ou ajustar limites de risco.
+        """)
+
     
     # Criar gráficos simples com matplotlib para evitar erros
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
@@ -805,43 +850,38 @@ if run_simulation:
                 mime="application/json"
             )
 
-# SIDEBAR COM INFORMAÇÕES
+# SIDEBAR COM PARÂMETROS
 with st.sidebar:
-    st.header("📚 Guia de Parâmetros")
-    
-    with st.expander("📊 Seed", expanded=False):
-        st.write("""
-        **O que é**: Número que garante reprodutibilidade
-        
-        **Impacto**: Com mesmo seed, simulação sempre gera mesmos resultados. Essencial para auditoria.
-        """)
-    
-    with st.expander("🎲 Distribuições", expanded=False):
-        st.write("""
-        **Normal**: Simétrica, eventos extremos raros
-        
-        **t-Student**: Caudas pesadas, crashes mais frequentes
-        
-        **Lognormal**: Apenas valores positivos
-        
-        **Impacto**: t-Student aumenta VaR em 10-30%
-        """)
-    
-    with st.expander("🔗 Correlações", expanded=False):
-        st.write("""
-        **Mercado Normal**: Correlações históricas médias
-        
-        **Crise**: Tudo correlaciona
-        
-        **Risk-On**: Ativos de risco sobem juntos
-        
-        **Impacto**: Correlação alta pode dobrar o VaR
-        """)
-    
-    st.write("---")
-    st.write("**Sistema VaR Professional**")
-    st.write(f"Versão 2.1 | {datetime.datetime.now():%Y}")
-    st.caption("Análise institucional de risco")
+    st.header("⚙️ Parâmetros")
+
+    horizonte_dias = st.selectbox(
+        "Horizonte Temporal (dias úteis)", 
+        options=[1, 5, 10, 15, 21, 42, 63, 126, 252, 504],
+        format_func=lambda x: f"{x} dias úteis ({x/21:.1f} meses)" if x > 21 else f"{x} dias úteis",
+        index=3
+    )
+
+    nivel_conf = st.selectbox(
+        "Nível de Confiança", 
+        ["90%", "95%", "97.5%", "99%", "99.5%"],
+        index=1
+    )
+
+    n_sims = st.selectbox(
+        "Número de Simulações",
+        options=[10_000, 50_000, 100_000, 250_000, 500_000],
+        format_func=lambda x: f"{x:,} simulações",
+        index=1
+    )
+
+    seed = st.number_input(
+        "Seed (reprodutibilidade)", 
+        min_value=0, 
+        max_value=1000000, 
+        value=42, 
+        step=1
+    )
+
 
 # Footer
 st.write("---")

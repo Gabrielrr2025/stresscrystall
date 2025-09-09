@@ -411,7 +411,8 @@ with tab5:
             metodo_backtest = st.selectbox(
                 "Método de backtesting",
                 ["Kupiec (POF)", "Christoffersen", "Ambos"],
-                help="Teste estatístico para validação"
+                help="Kupiec POF – Proportion of Failures: Testa se a proporção de violações (dias em que a perda real superou o VaR) está em linha com o nível de confiança escolhido (ex: 5% em 99% VaR).Mede acurácia global. Se o modelo gera muitas ou poucas violações, mostra que o VaR está mal calibrado (superestima ou subestima risco).
+                Christoffersen: Além de verificar a proporção de violações, testa a independência delas (se as falhas ocorrem de forma aleatória, sem clusters). Impacto: Avalia se o VaR responde bem a mudanças de mercado. Se violações se acumulam em crises, mostra que o modelo não captura bem a dinâmica temporal do risco."
             )
 
 # BOTÃO DE SIMULAÇÃO

@@ -62,12 +62,12 @@ st.subheader("⚙️ Parâmetros da Simulação")
 col1, col2 = st.columns(2)
 
 with col1:
-    pl = st.number_input("Patrimônio Líquido (R$)", 
-                        min_value=0.0, 
-                        value=10_000_000.0, 
-                        step=100_000.0,
-                        format="%.2f",
-                        help="Valor total do patrimônio sob gestão")
+pl = st.number_input("Patrimônio Líquido (R$)", 
+                     min_value=0.0, 
+                     value=10_000_000.0, 
+                     step=100_000.0,
+                     format="%.2f")
+st.write(f"💰 Patrimônio Líquido Atual: R$ {pl:,.2f}")
     
     # Menu dropdown para horizonte com mais opções
     horizonte_dias = st.selectbox(
@@ -103,27 +103,30 @@ with col2:
                           max_value=1000000, 
                           value=42, 
                           step=1,
-                          help="Valor para garantir reprodutibilidade dos resultados")
+                          help="Define reprodutibilidade: mudar o seed altera os cenários sorteados, mas não o risco esperado.")
 
 # ALOCAÇÃO DA CARTEIRA
 st.subheader("📈 Composição da Carteira")
 
-# Usar colunas para melhor organização
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    acoes = st.slider("Ações %", 0, 100, 40, 
-                     help="Percentual alocado em renda variável")
+    acoes = st.slider("(Ibovespa) %", 0, 100, 40)
 with col2:
-    juros = st.slider("Renda Fixa %", 0, 100, 30,
-                     help="Percentual em títulos de renda fixa")
+    juros = st.slider("(pré ou pós) %", 0, 100, 30)
 with col3:
-    dolar = st.slider("Moeda Estrangeira %", 0, 100, 20,
-                     help="Exposição a moedas estrangeiras")
+    dolar = st.slider("Moeda Estrangeira %", 0, 100, 20)
 with col4:
-    commodities = st.slider("Commodities %", 0, 100, 5,
-                           help="Exposição a commodities")
+    commodities = st.slider("Commodities %", 0, 100, 5)
 
-total_aloc = acoes + juros + dolar + commodities
+col5, col6, col7 = st.columns(3)
+with col5:
+    credito_privado = st.slider("Crédito Privado %", 0, 100, 5)
+with col6:
+    imobiliario = st.slider("Imobiliário %", 0, 100, 5)
+with col7:
+    outros = st.slider("Outros %", 0, 100, 0)
+
+total_aloc = acoes + juros + dolar + commodities + credito_privado + imobiliario + outros
 
 # Validação visual da alocação
 if total_aloc > 100:
@@ -135,11 +138,13 @@ else:
 
 # Gráfico de pizza da alocação
 fig_aloc = go.Figure(data=[go.Pie(
-    labels=['Ações', 'Renda Fixa', 'Moeda Estrangeira', 'Commodities', 'Caixa'],
-    values=[acoes, juros, dolar, commodities, max(0, 100-total_aloc)],
-    hole=.3,
-    marker_colors=['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+    labels=['(Ibovespa)', '(pré ou pós)', 'Moeda Estrangeira', 'Commodities',
+            'Crédito Privado', 'Imobiliário', 'Outros', 'Caixa'],
+    values=[acoes, juros, dolar, commodities, credito_privado, imobiliario, outros,
+            max(0, 100-total_aloc)],
+    hole=.3
 )])
+
 fig_aloc.update_layout(
     title="Alocação da Carteira",
     height=300,
@@ -148,7 +153,7 @@ fig_aloc.update_layout(
 )
 st.plotly_chart(fig_aloc, use_container_width=True)
 
-pesos = np.array([acoes, juros, dolar, commodities])/100
+pesos = np.array([acoes, juros, dolar, commodities, credito_privado, imobiliario, outros]) / 100
 
 # CONFIGURAÇÕES AVANÇADAS
 st.subheader("🔧 Configurações Avançadas do Modelo")
@@ -168,16 +173,16 @@ with tab1:
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         vol_acoes = st.number_input("Vol. Ações (%a.a.)", 5.0, 100.0, 25.0, 0.5,
-                                   help="Volatilidade histórica do Ibovespa: ~22%")
+                        
     with col2:
         vol_juros = st.number_input("Vol. Renda Fixa (%a.a.)", 1.0, 50.0, 8.0, 0.5,
-                                   help="Volatilidade típica de títulos públicos")
+                                  
     with col3:
         vol_dolar = st.number_input("Vol. Moeda (%a.a.)", 5.0, 50.0, 15.0, 0.5,
-                                   help="Volatilidade histórica USD/BRL: ~15%")
+                                 
     with col4:
         vol_commodities = st.number_input("Vol. Commodities (%a.a.)", 10.0, 100.0, 30.0, 0.5,
-                                         help="Volatilidade típica de commodities")
+                                         
     
     vols = np.array([vol_acoes, vol_juros, vol_dolar, vol_commodities]) / 100
     
@@ -207,7 +212,7 @@ with tab2:
     st.write("### Matriz de Correlação entre Ativos")
     
     usar_correlacao = st.checkbox("Ativar correlações entre ativos", value=True,
-                                 help="Correlações tornam o modelo mais realista")
+                                 help="Controla a dependência entre ativos: correlação alta risco alto, correlação baixa risco baixo.")
     
     if usar_correlacao:
         # Templates pré-definidos
@@ -322,8 +327,7 @@ with tab3:
         dist_acoes = st.selectbox(
             "Distribuição - Ações",
             ["Normal", "t-Student", "Lognormal", "Normal Mixture"],
-            help="t-Student: caudas pesadas (crashes mais prováveis)"
-        )
+            help="Distribuição define o formato dos retornos: Normal (otimista), t-Student (crises), Lognormal (positivos), Mixture (volatilidade variável)." )
         if dist_acoes == "t-Student":
             df_acoes = st.slider("Graus de liberdade (Ações)", 3, 30, 5,
                                 help="Menor valor = caudas mais pesadas")
@@ -360,7 +364,7 @@ with tab4:
     st.write("### Cenários de Stress Determinísticos")
     
     usar_cenarios = st.checkbox("Incluir cenários de stress históricos", value=True,
-                              help="Complementa a análise probabilística com eventos reais")
+                              help="Inclui choques históricos/determinísticos para testar a resiliência da carteira.")
     
     if usar_cenarios:
         # Inicializar cenários
@@ -392,7 +396,8 @@ with tab4:
         
         if len(st.session_state.cenarios) > 0:
             pct_stress = st.slider("Percentual de cenários de stress", 5, 30, 10,
-                                 help="% do total de simulações dedicado a cenários de stress")
+                                 help="Define quanto % das simulações será reservado a eventos extremos: mais peso = cenários mais pessimistas."
+)
 
 with tab5:
     st.write("### Configurações de Backtesting")
@@ -411,9 +416,8 @@ with tab5:
             metodo_backtest = st.selectbox(
                 "Método de backtesting",
                 ["Kupiec (POF)", "Christoffersen", "Ambos"],
-                help="Kupiec POF – Proportion of Failures: Testa se a proporção de violações (dias em que a perda real superou o VaR) está em linha com o nível de confiança escolhido (ex: 5% em 99% VaR).Mede acurácia global. Se o modelo gera muitas ou poucas violações, mostra que o VaR está mal calibrado (superestima ou subestima risco).
-                Christoffersen: Além de verificar a proporção de violações, testa a independência delas (se as falhas ocorrem de forma aleatória, sem clusters). Impacto: Avalia se o VaR responde bem a mudanças de mercado. Se violações se acumulam em crises, mostra que o modelo não captura bem a dinâmica temporal do risco."
-            )
+                help="Kupiec: calibração (proporção de falhas). Christoffersen: independência (falhas em sequência). Ambos: validação robusta do VaR."
+)
 
 # BOTÃO DE SIMULAÇÃO
 st.write("---")

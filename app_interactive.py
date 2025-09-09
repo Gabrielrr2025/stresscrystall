@@ -62,12 +62,14 @@ st.subheader("⚙️ Parâmetros da Simulação")
 col1, col2 = st.columns(2)
 
 with col1:
-pl = st.number_input("Patrimônio Líquido (R$)", 
-                     min_value=0.0, 
-                     value=10_000_000.0, 
-                     step=100_000.0,
-                     format="%.2f")
-st.write(f"💰 Patrimônio Líquido Atual: R$ {pl:,.2f}")
+with col1:
+    pl = st.number_input("Patrimônio Líquido (R$)", 
+                         min_value=0.0, 
+                         value=10_000_000.0, 
+                         step=100_000.0,
+                         format="%.2f")
+    st.write(f"💰 Patrimônio Líquido Atual: R$ {pl:,.2f}")
+
     
     # Menu dropdown para horizonte com mais opções
     horizonte_dias = st.selectbox(

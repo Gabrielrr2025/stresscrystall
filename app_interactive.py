@@ -774,12 +774,13 @@ else:
     st.info("🔎 Execute a simulação para visualizar os gráficos de análise.")
 
     
-    # EXPORTAÇÃO DE DADOS
-    if export_data:
-        st.subheader("💾 Exportação de Dados")
-        
+# EXPORTAÇÃO DE DADOS
+if export_data:
+    st.subheader("💾 Exportação de Dados")
+    
+    if "pnl" in locals() and run_simulation:
         col1, col2 = st.columns(2)
-        
+
         with col1:
             # CSV com resultados
             results_df = pd.DataFrame({
@@ -828,7 +829,8 @@ else:
                 file_name=f"VaR_Config_{datetime.datetime.now():%Y%m%d_%H%M}.json",
                 mime="application/json"
             )
-
+    else:
+        st.info("🔎 Execute a simulação para habilitar a exportação de dados.")
 
 # Footer
 st.write("---")

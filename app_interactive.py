@@ -14,6 +14,7 @@ import seaborn as sns
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import statsmodels.api as sm
 
 # Configuração da página
 st.set_page_config(
@@ -501,6 +502,25 @@ with col1:
     run_simulation = st.button("🚀 Executar Simulação", 
                               type="primary", 
                               use_container_width=True)
+# 🔎 Validação de campos obrigatórios
+campos_obrigatorios = {
+    "Nome do Projeto": nome_projeto,
+    "Responsável pela Análise": responsavel,
+    "CNPJ": cnpj,
+    "Nome do Fundo": nome_fundo
+}
+
+erros = [campo for campo, valor in campos_obrigatorios.items() if not valor.strip()]
+
+if erros:
+    st.error(f"⚠️ Os seguintes campos são obrigatórios e não podem ficar em branco: {', '.join(erros)}")
+    run_simulation = False
+
+# Validação do Patrimônio Líquido
+if pl <= 0:
+    st.error("⚠️ O Patrimônio Líquido deve ser maior que zero.")
+    run_simulation = False
+
 with col2:
     generate_report = st.checkbox("📄 Gerar Relatório PDF", value=True)
 with col3:

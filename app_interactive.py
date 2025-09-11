@@ -795,22 +795,23 @@ else:
     st.info("🔎 Execute a simulação para visualizar os gráficos de análise.")
 
     
-# EXPORTAÇÃO DE DADOS
+# ==================================================
+# 💾 EXPORTAÇÃO DE DADOS (CSV, JSON, PDF)
+# ==================================================
 if export_data:
     st.subheader("💾 Exportação de Dados")
-    
-    if "pnl" in locals() and run_simulation:
-        col1, col2 = st.columns(2)
 
+    if "pnl" in locals() and run_simulation:
+        col1, col2, col3 = st.columns(3)
+
+        # Exportar CSV
         with col1:
-            # CSV com resultados
             results_df = pd.DataFrame({
                 'Simulação': range(1, len(pnl)+1),
                 'Tipo': all_labels,
                 'P&L (R$)': pnl,
                 'Retorno Portfolio (%)': port_ret * 100
             })
-            
             csv = results_df.to_csv(index=False)
             st.download_button(
                 label="📥 Baixar Simulações (CSV)",
@@ -818,31 +819,31 @@ if export_data:
                 file_name=f"VaR_Simulations_{datetime.datetime.now():%Y%m%d_%H%M}.csv",
                 mime="text/csv"
             )
-        
+
+        # Exportar JSON
         with col2:
-            # JSON com configurações
             config_json = {
                 'projeto': nome_projeto,
-                'cnpj': cnpj,
                 'responsavel': responsavel,
-                'data_analise': datetime.datetime.now().isoformat(),
+                'cnpj': cnpj,
+                'nome_fundo': nome_fundo,
+                'data_referencia': str(data_ref),
+                'patrimonio_liquido': float(pl),
                 'parametros': {
-                    'patrimonio_liquido': float(pl),
                     'horizonte_dias': horizonte_dias,
                     'nivel_confianca': nivel_conf,
                     'num_simulacoes': n_sims,
                     'seed': seed
                 },
                 'resultados': {
-                    'var': float(var),
-                    'cvar': float(es),
-                    'sharpe': float(sharpe),
-                    'sortino': float(sortino),
-                    'max_perda': float(max_loss),
-                    'prob_perda': float(prob_loss)
+                    'VaR': float(var),
+                    'CVaR': float(es),
+                    'Sharpe': float(sharpe),
+                    'Sortino': float(sortino),
+                    'Max Loss': float(max_loss),
+                    'Probabilidade de Perda': float(prob_loss)
                 }
             }
-            
             json_str = json.dumps(config_json, indent=2, ensure_ascii=False)
             st.download_button(
                 label="📥 Baixar Configurações (JSON)",
@@ -850,8 +851,165 @@ if export_data:
                 file_name=f"VaR_Config_{datetime.datetime.now():%Y%m%d_%H%M}.json",
                 mime="application/json"
             )
+
+        # Exportar PDF
+        with col3:
+            pdf_buffer = BytesIO()
+            with PdfPages(pdf_buffer) as pdf:
+
+                # Página 1 - Capa
+                fig_capa = plt.figure(figsize=(8.5, 11))
+                plt.axis("off")
+                plt.text(0.5, 0.9, "Relatório de Risco - VaR Monte Carlo", ha="center", fontsize=18, weight="bold")
+                plt.text(0.1, 0.75, f"📌 Projeto: {nome_projeto}", fontsize=12)
+                plt.text(0.1, 0.70, f"👤 Responsável: {responsavel}", fontsize=12)
+                plt.text(0.1, 0.65, f"🏦 Fundo: {nome_fundo}", fontsize=12)
+                plt.text(0.1, 0.60, f"📄 CNPJ: {cnpj}", fontsize=12)
+                plt.text(0.1, 0.55, f"📅 Data Ref: {data_ref.strftime('%d/%m/%Y')}", fontsize=12)
+                plt.text(0.1, 0.50, f"💰 PL: R$ {pl:,.2f}", fontsize=12)
+                pdf.savefig(fig_capa)
+                plt.close(fig_capa)
+
+                # Página 2 - Métricas
+                fig_metrics = plt.figure(figsize=(8.5, 11))
+                plt.axis("off")
+                plt.text(0.5, 0.9, "Métricas de Risco", ha="center", fontsize=16, weight="bold")
+                plt.text(0.1, 0.75, f"VaR ({nivel_conf}): R$ {var:,.2f}", fontsize=12)
+                plt.text(0.1, 0.70, f"CVaR: R$ {es:,.2f}", fontsize=12)
+                plt.text(0.1, 0.65, f"Sharpe: {sharpe:.2f}", fontsize=12)
+                plt.text(0.1, 0.60, f"Sortino: {sortino:.2f}", fontsize=12)
+                plt.text(0.1, 0.55, f"Máxima Perda: R$ {max_loss:,.2f}", fontsize=12)
+                plt.text(0.1, 0.50, f"Prob. de Perda: {prob_loss:.2%}", fontsize=12)
+                pdf.savefig(fig_metrics)
+                plt.close(fig_metrics)
+
+                # Página 3 - Distribuição de P&L
+                fig_hist = plt.figure(figsize=(8, 6))
+                plt.hist(pnl/1000, bins=50, alpha=0.7, color='blue', edgecolor='black')
+                plt.axvline(-var/1000, color='red', linestyle='--', label=f'VaR {nivel_conf}')
+                plt.axvline(-es/1000, color='orange', linestyle='--', label='CVaR')
+                plt.title("Distribuição de P&L")
+                plt.legend()
+                pdf.savefig(fig_hist)
+                plt.close(fig_hist)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "Este gráfico mostra a frequência de ganhos e perdas simulados.\n"
+                         "➝ Cauda esquerda longa = risco de perdas extremas.\n"
+                         "➝ Linha vermelha = VaR (perda máxima esperada).\n"
+                         "➝ Linha laranja = CVaR (perda média além do VaR).",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+                # Página 4 - Q-Q Plot
+                fig_qq = plt.figure(figsize=(8, 6))
+                stats.probplot(pnl, dist="norm", plot=plt)
+                plt.title("Q-Q Plot")
+                pdf.savefig(fig_qq)
+                plt.close(fig_qq)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "Compara os retornos simulados com a distribuição normal.\n"
+                         "➝ Pontos próximos da reta = comportamento normal.\n"
+                         "➝ Desvios nas caudas = risco de eventos extremos.",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+                # Página 5 - CDF
+                fig_cdf = plt.figure(figsize=(8, 6))
+                sorted_pnl = np.sort(pnl)
+                cdf = np.arange(1, len(sorted_pnl)+1) / len(sorted_pnl)
+                plt.plot(sorted_pnl/1000, cdf, color='blue')
+                plt.axvline(-var/1000, color='red', linestyle='--', label='VaR')
+                plt.title("Função de Distribuição (CDF)")
+                plt.xlabel('P&L (R$ mil)')
+                plt.ylabel('Prob. acumulada')
+                plt.legend()
+                pdf.savefig(fig_cdf)
+                plt.close(fig_cdf)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "A CDF mostra a probabilidade acumulada dos resultados.\n"
+                         "➝ Permite avaliar chance de perdas além do VaR.\n"
+                         "➝ Se curva sobe rápido na zona negativa = maior risco.",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+                # Página 6 - Decomposição do Risco
+                fig_risco = plt.figure(figsize=(8, 6))
+                contrib_risco = vols_horizonte * np.array([acoes, juros, credito_privado, dolar, imobiliario, commodities, alternativos]) / 100
+                plt.bar(['Ações', 'Renda Fixa', 'Crédito Privado', 'Moeda', 'Imobiliário', 'Commodities', 'Outros'], contrib_risco)
+                plt.title("Decomposição do Risco")
+                pdf.savefig(fig_risco)
+                plt.close(fig_risco)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "Mostra a contribuição de cada classe de ativo para o risco.\n"
+                         "➝ Barras mais altas = maior impacto no risco total.\n"
+                         "➝ Se um ativo domina, pode haver concentração perigosa.",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+                # Página 7 - Scatter
+                fig_scatter = plt.figure(figsize=(8, 6))
+                plt.scatter(np.random.normal(0, vols_horizonte[0], n_sims), pnl/1000, alpha=0.3)
+                plt.title("Scatter Ações vs Portfólio")
+                plt.xlabel("Retorno Ações")
+                plt.ylabel("P&L Portfólio (R$ mil)")
+                pdf.savefig(fig_scatter)
+                plt.close(fig_scatter)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "Mostra como os retornos das ações se relacionam com o portfólio.\n"
+                         "➝ Correlação alta = quedas em ações impactam fortemente o fundo.\n"
+                         "➝ Diversificação reduz vulnerabilidade.",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+                # Página 8 - VaR Móvel
+                fig_var_roll = plt.figure(figsize=(8, 6))
+                window = 250
+                rolling_var = [np.percentile(pnl[max(0, i-window):i+1], 100*(1-float(conf_map[nivel_conf]))) for i in range(len(pnl))]
+                plt.plot(rolling_var, color='red')
+                plt.title(f"VaR Móvel (janela={window})")
+                pdf.savefig(fig_var_roll)
+                plt.close(fig_var_roll)
+
+                fig_text = plt.figure(figsize=(8.5, 3))
+                plt.axis("off")
+                plt.text(0.05, 0.9,
+                         "Evolução do VaR ao longo das simulações.\n"
+                         "➝ Oscilações grandes = instabilidade da carteira.\n"
+                         "➝ Sinal de necessidade de monitoramento frequente.",
+                         fontsize=11, va="top")
+                pdf.savefig(fig_text)
+                plt.close(fig_text)
+
+            st.download_button(
+                label="📥 Baixar Relatório (PDF)",
+                data=pdf_buffer.getvalue(),
+                file_name=f"VaR_Report_{datetime.datetime.now():%Y%m%d_%H%M}.pdf",
+                mime="application/pdf"
+            )
+
     else:
-        st.info("🔎 Execute a simulação para habilitar a exportação de dados.")
+        st.info("🔎 Execute a simulação para habilitar exportação.")
+
 
 # Footer
 st.write("---")

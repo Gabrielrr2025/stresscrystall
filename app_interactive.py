@@ -679,7 +679,7 @@ if run_simulation:
     col4.metric("Curtose", f"{kurtosis_value:.2f}")
     
 # VISUALIZAÇÕES
-col1, col2 = st.columns([8,1])
+col1, col2 = st.columns([6,2])
 with col1:
     st.subheader("📈 Análise Visual")
 with col2:

@@ -102,6 +102,10 @@ with st.sidebar:
         step=1
     )
 
+# Converter nível de confiança em valor numérico (alpha)
+conf_map = {"90%": 0.90, "95%": 0.95, "97.5%": 0.975, "99%": 0.99, "99.5%": 0.995}
+alpha = conf_map[nivel_conf]
+
 # ALOCAÇÃO POR CLASSE
 st.subheader("📊 Alocação por Classe")
 
@@ -679,10 +683,7 @@ if run_simulation:
     col4.metric("Curtose", f"{kurtosis_value:.2f}")
     
 # VISUALIZAÇÕES
-col1, col2 = st.columns([6,2])
-with col1:
     st.subheader("📈 Análise Visual")
-with col2:
     with st.expander("❓"):
         st.markdown("""
         **Objetivo da Análise Visual**  
